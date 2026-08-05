@@ -1,0 +1,65 @@
+# Reusable Rust CI: fmt, clippy, and test on a stable toolchain.
+#
+# Callers keep their own triggers, permissions, and concurrency settings;
+# this workflow only defines the check job itself.
+name: Rust CI (reusable)
+
+on:
+  workflow_call:
+    inputs:
+      targets:
+        description: >-
+          Extra rustup targets to install (comma-separated), e.g. for
+          bare metal builds.
+        type: string
+        default: ""
+      test-env:
+        description: >-
+          Environment variables exported before running checks, one
+          KEY=VALUE per line.
+        type: string
+        default: ""
+      extra-check:
+        description: Shell command to run after cargo test.
+        type: string
+        default: ""
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      CARGO_TERM_COLOR: always
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Export caller-provided environment
+        if: inputs.test-env != ''
+        env:
+          TEST_ENV: ${{ inputs.test-env }}
+        run: printf '%s\n' "$TEST_ENV" >> "$GITHUB_ENV"
+
+      # Third-party actions are pinned to a commit SHA; Dependabot keeps
+      # the pin and the version comment in sync.
+      - uses: dtolnay/rust-toolchain@4cda84d5c5c54efe2404f9d843567869ab1699d4 # stable
+        with:
+          # Required when pinned to a SHA: the toolchain can no longer be
+          # inferred from the ref name.
+          toolchain: stable
+          components: rustfmt, clippy
+          targets: ${{ inputs.targets }}
+
+      - uses: Swatinem/rust-cache@23869a5bd66c73db3c0ac40331f3206eb23791dc # v2.9.1
+
+      - name: cargo fmt
+        run: cargo fmt --all --check
+
+      - name: cargo clippy
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+      - name: cargo test
+        run: cargo test --workspace
+
+      - name: Extra check
+        if: inputs.extra-check != ''
+        run: ${{ inputs.extra-check }}
