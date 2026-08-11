@@ -28,7 +28,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
+      # On a workflow_run trigger the default checkout would be the current
+      # HEAD of the default branch, which may be newer than the commit the
+      # triggering workflow (e.g. CI) actually validated. Pin to the
+      # validated commit; head_sha is empty for other triggers, so fall
+      # back to the usual github.sha.
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       # Creates the Pages site with the "GitHub Actions" source if it
       # doesn't exist yet, so no manual repo-settings step is needed.
