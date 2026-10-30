@@ -33,36 +33,36 @@ jobs:
       # triggering workflow (e.g. CI) actually validated. Pin to the
       # validated commit; head_sha is empty for other triggers, so fall
       # back to the usual github.sha.
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
         with:
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       # Creates the Pages site with the "GitHub Actions" source if it
       # doesn't exist yet, so no manual repo-settings step is needed.
-      - uses: actions/configure-pages@v6
+      - uses: actions/configure-pages@v6.0.0
         with:
           enablement: true
 
       # Third-party actions are pinned to a commit SHA; Dependabot keeps
       # the pin and the version comment in sync.
-      - uses: dtolnay/rust-toolchain@4cda84d5c5c54efe2404f9d843567869ab1699d4 # stable
+      - uses: dtolnay/rust-toolchain@stable
         with:
           # Required when pinned to a SHA: the toolchain can no longer be
           # inferred from the ref name.
           toolchain: stable
           targets: wasm32-unknown-unknown
 
-      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - uses: Swatinem/rust-cache@v2.9.3
 
       - name: Install wasm-pack
-        uses: taiki-e/install-action@1e29709c0ec63babbe8f266397a465f29a825f91 # v2.87.31
+        uses: taiki-e/install-action@v2.87.31
         with:
           tool: wasm-pack@${{ inputs.wasm-pack-version }}
 
       - name: Build playground
         run: ${{ inputs.build-script }}
 
-      - uses: actions/upload-pages-artifact@v5
+      - uses: actions/upload-pages-artifact@v5.0.0
         with:
           path: ${{ inputs.dist-path }}
 
@@ -75,4 +75,4 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v5
+        uses: actions/deploy-pages@v5.0.1
